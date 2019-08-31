@@ -33,7 +33,7 @@ const UserSchema = new mongoose.Schema({
     ]
 });
 
-// instance Schema
+// instance Methods 
 
     // Override toJson method which return the whole object
     UserSchema.methods.toJSON = function(){
@@ -49,7 +49,7 @@ const UserSchema = new mongoose.Schema({
         const user = this;
         return new Promise((resolve, reject) => {
             // Create the JSON web TOKEN and return it
-            jwt.sign({_id: user._id.toHexString()},jwtSecret,{expiresIn: '15m'},(err,token)=>{
+            jwt.sign({_id: user._id.toHexString()},jwtSecret,{expiresIn: "15m"},(err,token)=>{
                 if(!err){
                     resolve(token);
                 }else{
@@ -79,20 +79,22 @@ const UserSchema = new mongoose.Schema({
         }).then((refreshToken) => {
             return refreshToken;
         }).catch((e) => {
-            return Promise.reject('failed to save session to database'+ e);
+            return Promise.reject('failed to save session to database '+ e);
         });
     }
 
 // Model methods (static methods)   
     UserSchema.statics.findByIdAndToken = function(_id, token) {
-        const user = this;
-        return user.findOne({
+        const User = this;
+        return User.findOne({
             _id,
             'sessions.token': token
         });
     }
+
     UserSchema.statics.findByCords = function(username, password) {
-        return user.findOne({username}).then((user) => {
+        let User = this;
+        return User.findOne({username}).then((user) => {
             if(!user){
                 return Promise.reject();
             }
@@ -107,6 +109,7 @@ const UserSchema = new mongoose.Schema({
             }); 
         });
     } 
+
     UserSchema.pre('save', function(next){
         let user = this;
         let costFactor = 10;
@@ -121,6 +124,7 @@ const UserSchema = new mongoose.Schema({
             next();
         }
     });
+
     UserSchema.statics.hasRefreshTokenExpired = (expiresAt) => {
         let secondsSinceEpoch = Date.now() / 1000;
         if(expiresAt> secondsSinceEpoch){
@@ -129,6 +133,11 @@ const UserSchema = new mongoose.Schema({
             return true;
         }
     }
+
+    UserSchema.statics.getJWTSecret = () => {
+        return jwtSecret;
+    }
+
 
     
 // Help methods
@@ -149,7 +158,7 @@ const UserSchema = new mongoose.Schema({
     let generateRefreshTokenExpiryTime = ()=> {
         let daysUntilExpire = '10';
         let secondsUntilExpire = ((daysUntilExpire * 24) * 60) * 60;
-        return ((Date.now()/1000)*secondsUntilExpire);
+        return ((Date.now()/1000)+secondsUntilExpire);
     }
 
 
